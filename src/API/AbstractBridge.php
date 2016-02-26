@@ -36,9 +36,9 @@ abstract class AbstractBridge
     private $bridgeRefinementsUrl;
     /** @var Serializer */
     private $serializer;
-    /** @var int */
+    /** @var float */
     private $timeout;
-    /** @var int */
+    /** @var float */
     private $connectTimeout;
 
     /**
@@ -139,7 +139,7 @@ abstract class AbstractBridge
         return Request::post($url . "?retry=$tries")
             ->body($content)
             ->timeout(isset($this->timeout) ? $this->timeout : self::DEFAULT_TIMEOUT)
-            ->addOnCurlOption(CURLOPT_CONNECTTIMEOUT, isset($this->connectTimeout) ? $this->connectTimeout : self::DEFAULT_CONNECT_TIMEOUT)
+            ->addOnCurlOption(CURLOPT_CONNECTTIMEOUT_MS, (isset($this->connectTimeout) ? $this->connectTimeout : self::DEFAULT_CONNECT_TIMEOUT) * 1000)
             ->sendsType(Mime::JSON)
             ->send();
     }
@@ -173,7 +173,7 @@ abstract class AbstractBridge
     }
 
     /**
-     * @param int $connectTimeout seconds
+     * @param float $connectTimeout seconds
      * @return $this
      */
     public function setConnectTimeout($connectTimeout)
@@ -183,7 +183,7 @@ abstract class AbstractBridge
     }
 
     /**
-     * @param int $timeout seconds
+     * @param float $timeout seconds
      * @return $this
      */
     public function setTimeout($timeout)
