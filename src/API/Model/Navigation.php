@@ -80,6 +80,12 @@ class Navigation
     public $metadata = array();
 
     /**
+     * @var bool
+     * @JMS\Type("boolean")
+     */
+    public $ignored = false;
+
+    /**
      * @return string The name of the dynamic navigation attribute.
      */
     public function getName()
@@ -266,6 +272,25 @@ class Navigation
     public function setMoreRefinements($moreRefinements)
     {
         $this->moreRefinements = $moreRefinements;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIgnored()
+    {
+        return $this->ignored;
+    }
+
+    /**
+     * @param bool $ignored
+     *
+     * @return $this
+     */
+    public function setIgnored($ignored)
+    {
+        $this->ignored = $ignored;
         return $this;
     }
 

@@ -95,6 +95,12 @@ class Results
     public $siteParams = array();
 
     /**
+     * @var string[]
+     * @JMS\Type("array<string>")
+     */
+    public $warnings = array();
+
+    /**
      * @return string[] A list of spell corrections based on the search term.
      */
     public function getDidYouMean()
@@ -364,6 +370,22 @@ class Results
     public function setBiasingProfile($biasingProfile)
     {
         $this->biasingProfile = $biasingProfile;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getWarnings()
+    {
+      return $this->warnings;
+    }
+
+    /**
+     * @param string[] $warnings
+     */
+    public function setWarnings($warnings)
+    {
+      $this->warnings = $warnings;
     }
 }
 

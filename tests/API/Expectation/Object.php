@@ -126,7 +126,8 @@ class Object
             ->setSort(self::$SORT)
             ->setMetadata(array(self::$METADATA))
             ->setRefinements(array(self::$REFINEMENT_RANGE, self::$REFINEMENT_VALUE))
-            ->setMoreRefinements(true);
+            ->setMoreRefinements(true)
+            ->setIgnored(true);
 
         self::$REFINEMENT_MATCH_VALUE = new RefinementMatch\Value();
         self::$REFINEMENT_MATCH_VALUE->setValue('adverb')
@@ -250,6 +251,7 @@ class Object
         self::$RESULTS->setRelatedQueries(array("squawk", "ask"));
         self::$RESULTS->setRewrites(array("Synonym", "Antonym", "Homonym"));
         self::$RESULTS->setTotalRecordCount(34);
+        self::$RESULTS->setWarnings(array("Selected refinement field 'nonRefinable' must have 'refinable:true' in the upload configuration."));
 
         self::$REFINEMENTS_RESULT = new RefinementsResult();
         self::$REFINEMENTS_RESULT->setErrors("Could not load");

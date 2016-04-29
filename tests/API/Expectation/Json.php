@@ -47,7 +47,7 @@ class Json
         self::$NAVIGATION = '{"_id":"081h29n81f","name":"green","displayName":"GReeN",' .
             '"range":true,"or":false,"type":"Range_Date","sort":' . self::$SORT . ',"refinements":[' .
             self::$REFINEMENT_RANGE . ',' . self::$REFINEMENT_VALUE .
-            '],"metadata":[' . self::$METADATA . '],"moreRefinements":true}';
+            '],"metadata":[' . self::$METADATA . '],"moreRefinements":true,"ignored":true}';
 
         self::$MATCH_STRATEGY = '{"rules":[' . self::$PARTIAL_MATCH_RULE . ']}';
 
@@ -70,7 +70,8 @@ class Json
             '"siteParams":[' . self::$METADATA . '],"rewrites":["Synonym","Antonym","Homonym"],' .
             '"pageInfo":' . self::$PAGE_INFO . ',"template":' . self::$TEMPLATE . ',' .
             '"redirect":"/to/the/moon.html","errors":"criminey!","query":"skwuare","area":"christmas",' .
-            '"totalRecordCount":34,"biasingProfile":"unbiased","originalQuery":"skwuare---","correctedQuery":"square"}';
+            '"totalRecordCount":34,"biasingProfile":"unbiased","originalQuery":"skwuare---","correctedQuery":"square",' .
+            '"warnings":["Selected refinement field \'nonRefinable\' must have \'refinable:true\' in the upload configuration."]}';
 
         self::$REFINEMENT_RESULTS = '{"errors":"Could not load","navigation":' . self::$NAVIGATION . '}';
     }
