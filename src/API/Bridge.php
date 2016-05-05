@@ -2,6 +2,8 @@
 
 namespace GroupByInc\API;
 
+use GroupByInc\API\Config\ConnectionConfiguration;
+
 class Bridge extends AbstractBridge
 {
   /**
@@ -11,6 +13,6 @@ class Bridge extends AbstractBridge
    */
   function __construct($clientKey, $bridgeHost, $bridgePort)
   {
-    parent::__construct($clientKey, self::HTTP . $bridgeHost . self::COLON . $bridgePort);
+    parent::__construct($clientKey, self::HTTP . $bridgeHost . self::COLON . $bridgePort, new ConnectionConfiguration());
   }
 }

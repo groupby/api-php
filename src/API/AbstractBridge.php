@@ -3,8 +3,8 @@
 namespace GroupByInc\API;
 
 use Exception;
+use GroupByInc\API\Config\ConnectionConfiguration;
 use GroupByInc\API\Util\SerializerFactory;
-use GroupByInc\API\Util\UriBuilder;
 use Httpful\Mime;
 use Httpful\Request;
 use Httpful\Response;
@@ -21,10 +21,8 @@ abstract class AbstractBridge
   const HTTP = 'http://';
   const HTTPS = 'https://';
   const COLON = ':';
-  const MAX_TRIES = 3;
-  const RETRY_TIMEOUT = 80000;
-  const DEFAULT_TIMEOUT = 30;
-  const DEFAULT_CONNECT_TIMEOUT = 15;
+  const DEFAULT_MAX_TRIES = 3;
+  const DEFAULT_RETRY_TIMEOUT = 80000;
 
   /** @var string */
   private $clientKey;
@@ -36,21 +34,25 @@ abstract class AbstractBridge
   private $bridgeRefinementsUrl;
   /** @var Serializer */
   private $serializer;
+  /** @var int */
+  private $maxTries = self::DEFAULT_MAX_TRIES;
   /** @var float */
-  private $timeout;
-  /** @var float */
-  private $connectTimeout;
+  private $retryTimeout = self::DEFAULT_RETRY_TIMEOUT;
+  /** @var ConnectionConfiguration */
+  private $config;
 
   /**
-   * @param string $clientKey
-   * @param string $baseUrl
+   * @param string                  $clientKey
+   * @param string                  $baseUrl
+   * @param ConnectionConfiguration $config
    */
-  function __construct($clientKey, $baseUrl)
+  function __construct($clientKey, $baseUrl, $config)
   {
     $this->clientKey = $clientKey;
     $this->bridgeUrl = $baseUrl . self::SEARCH;
     $this->bridgeUrlCluster = $baseUrl . self::CLUSTER;
     $this->bridgeRefinementsUrl = $baseUrl . self::SEARCH . self::REFINEMENTS;
+    $this->config = $config;
 
     $this->serializer = SerializerFactory::build();
   }
@@ -93,20 +95,20 @@ abstract class AbstractBridge
     $tries = 0;
     $lastError = null;
 
-    while ($tries < self::MAX_TRIES) {
+    while ($tries < $this->maxTries) {
       try {
         $response = $this->execute($url, $content, $tries);
         break;
       } catch (Exception $e) {
-        usleep(self::RETRY_TIMEOUT);
+        usleep($this->retryTimeout);
         error_log('Connection failed, retrying');
         $lastError = $e;
         $tries++;
       }
     }
 
-    if ($tries == self::MAX_TRIES) {
-      throw new RuntimeException("Error: call to URL $url failed after " . self::MAX_TRIES . " tries", 0, $lastError);
+    if ($tries == $this->maxTries) {
+      throw new RuntimeException("Error: call to URL $url failed after " . $this->maxTries . " tries", 0, $lastError);
     }
 
     if ($response->hasErrors()) {
@@ -138,8 +140,9 @@ abstract class AbstractBridge
 
     return Request::post($url . "?retry=$tries")
         ->body($content)
-        ->timeout(isset($this->timeout) ? $this->timeout : self::DEFAULT_TIMEOUT)
-        ->addOnCurlOption(CURLOPT_CONNECTTIMEOUT_MS, (isset($this->connectTimeout) ? $this->connectTimeout : self::DEFAULT_CONNECT_TIMEOUT) * 1000)
+        ->timeout($this->config->getTimeout())
+        ->addOnCurlOption(CURLOPT_CONNECTTIMEOUT_MS, $this->config->getConnectTimeout() * 1000)
+        ->addOnCurlOption(CURLOPT_MAXCONNECTS, $this->config->getMaxConnections())
         ->sendsType(Mime::JSON)
         ->send();
   }
@@ -173,22 +176,22 @@ abstract class AbstractBridge
   }
 
   /**
-   * @param float $connectTimeout seconds
+   * @param float $retryTimeout Sets the retry timeout for a failed request.
    * @return $this
    */
-  public function setConnectTimeout($connectTimeout)
+  public function setRetryTimeout($retryTimeout)
   {
-    $this->connectTimeout = $connectTimeout;
+    $this->retryTimeout = $retryTimeout;
     return $this;
   }
 
   /**
-   * @param float $timeout seconds
+   * @param int $maxTries Sets the maximum number of times to try a request before returning an error.
    * @return $this
    */
-  public function setTimeout($timeout)
+  public function setMaxTries($maxTries)
   {
-    $this->timeout = $timeout;
+    $this->maxTries = $maxTries;
     return $this;
   }
 
