@@ -32,562 +32,562 @@ use RuntimeException;
 
 class Symbol
 {
-    const TILDE = "~";
-    const DOT = ".";
-    const DOUBLE_DOT = "..";
-    const EQUAL = "=";
-    const COLON = ":";
-    const AMPERSAND = "&";
-    const SLASH = "/";
+  const TILDE = "~";
+  const DOT = ".";
+  const DOUBLE_DOT = "..";
+  const EQUAL = "=";
+  const COLON = ":";
+  const AMPERSAND = "&";
+  const SLASH = "/";
 }
 
 class Query
 {
-    /** @var string */
-    private $userId;
-    /** @var string */
-    private $query;
-    /** @var int */
-    private $skip = 0;
-    /** @var int */
-    private $pageSize = 10;
-    /** @var string */
-    private $collection;
-    /** @var string */
-    private $area;
-    /** @var string */
-    private $biasingProfile;
-    /** @var string */
-    private $language;
-    /** @var MSort[] */
-    private $sort;
-    /** @var CustomUrlParam[] */
-    private $customUrlParams = array();
-    /** @var Navigation[] */
-    private $navigations = array();
-    /** @var string[] */
-    private $includedNavigations = array();
-    /** @var string[] */
-    private $excludedNavigations = array();
-    /** @var string[] */
-    private $fields = array();
-    /** @var string[] */
-    private $orFields = array();
-    /** @var bool */
-    private $pruneRefinements = true;
-    /** @var bool */
-    private $disableAutocorrection = false;
-    /** @var bool */
-    private $wildcardSearchEnabled = false;
-    // Removed until CBOR support for serialization / de-serialization improves
+  /** @var string */
+  private $userId;
+  /** @var string */
+  private $query;
+  /** @var int */
+  private $skip = 0;
+  /** @var int */
+  private $pageSize = 10;
+  /** @var string */
+  private $collection;
+  /** @var string */
+  private $area;
+  /** @var string */
+  private $biasingProfile;
+  /** @var string */
+  private $language;
+  /** @var MSort[] */
+  private $sort;
+  /** @var CustomUrlParam[] */
+  private $customUrlParams = array();
+  /** @var Navigation[] */
+  private $navigations = array();
+  /** @var string[] */
+  private $includedNavigations = array();
+  /** @var string[] */
+  private $excludedNavigations = array();
+  /** @var string[] */
+  private $fields = array();
+  /** @var string[] */
+  private $orFields = array();
+  /** @var bool */
+  private $pruneRefinements = true;
+  /** @var bool */
+  private $disableAutocorrection = false;
+  /** @var bool */
+  private $wildcardSearchEnabled = false;
+  // Removed until CBOR support for serialization / de-serialization improves
 //    /** @var bool */
 //    private $returnBinary = false;
-    /** @var RestrictNavigation */
-    private $restrictNavigation;
-    /** @var MBiasing */
-    private $biasing;
+  /** @var RestrictNavigation */
+  private $restrictNavigation;
+  /** @var MBiasing */
+  private $biasing;
 
-    /** @var Serializer */
-    private $serializer;
+  /** @var Serializer */
+  private $serializer;
 
-    const TILDE_REGEX = "/~((?=[\\w]*[=:]))/";
+  const TILDE_REGEX = "/~((?=[\\w]*[=:]))/";
 
-    /**
-     * @param mixed $request
-     *
-     * @return string
-     */
-    private function requestToJson($request)
-    {
-        $jsonRequest = null;
-        try {
-            $jsonRequest = $this->serializer->serialize($request, 'json');
-        } catch (RuntimeException $e) {
-            throw new RuntimeException('Unable to serialize request ' . var_dump($request));
-        }
-
-        return $jsonRequest;
+  /**
+   * @param mixed $request
+   *
+   * @return string
+   */
+  private function requestToJson($request)
+  {
+    $jsonRequest = null;
+    try {
+      $jsonRequest = $this->serializer->serialize($request, 'json');
+    } catch (RuntimeException $e) {
+      throw new RuntimeException('Unable to serialize request ' . var_dump($request));
     }
 
-    /**
-     * @param string $clientKey Your client key.
-     *
-     * @return string JSON representation of request to Bridge.
-     */
-    public function getBridgeJson($clientKey)
-    {
-        $data = $this->populateRequest($clientKey);
-        return $this->requestToJson($data);
+    return $jsonRequest;
+  }
+
+  /**
+   * @param string $clientKey Your client key.
+   *
+   * @return string JSON representation of request to Bridge.
+   */
+  public function getBridgeJson($clientKey)
+  {
+    $data = $this->populateRequest($clientKey);
+    return $this->requestToJson($data);
+  }
+
+  /**
+   * @param string $clientKey      Your client key.
+   * @param string $navigationName Name of the navigation to get refinements for
+   *
+   * @return string JSON representation of request to Bridge.
+   */
+  public function getBridgeRefinementsJson($clientKey, $navigationName)
+  {
+    $data = new RefinementsRequest();
+    $data->originalQuery = $this->populateRequest($clientKey);
+    $data->navigationName = $navigationName;
+    return $this->requestToJson($data);
+  }
+
+  /**
+   * @param string $clientKey
+   *
+   * @return Request
+   */
+  private function populateRequest($clientKey)
+  {
+    $request = new Request();
+    $request->clientKey = $clientKey;
+    $request->area = $this->area;
+    $request->collection = $this->collection;
+    $request->userId = $this->userId;
+    $request->query = $this->query;
+    $request->fields = $this->fields;
+    $request->orFields = $this->orFields;
+    $request->language = $this->language;
+    $request->biasingProfile = $this->biasingProfile;
+    $request->pageSize = $this->pageSize;
+    $request->skip = $this->skip;
+    $request->customUrlParams = $this->customUrlParams;
+    $request->refinements = $this->generateSelectedRefinements($this->navigations);
+    $request->restrictNavigation = $this->restrictNavigation;
+
+    if (!empty($this->biasing)) {
+      $request->biasing = self::convertBiasing($this->biasing);
     }
 
-    /**
-     * @param string $clientKey      Your client key.
-     * @param string $navigationName Name of the navigation to get refinements for
-     *
-     * @return string JSON representation of request to Bridge.
-     */
-    public function getBridgeRefinementsJson($clientKey, $navigationName)
-    {
-        $data = new RefinementsRequest();
-        $data->originalQuery = $this->populateRequest($clientKey);
-        $data->navigationName = $navigationName;
-        return $this->requestToJson($data);
+    if (!empty($this->includedNavigations)) {
+      $request->includedNavigations = $this->includedNavigations;
     }
 
-    /**
-     * @param string $clientKey
-     *
-     * @return Request
-     */
-    private function populateRequest($clientKey)
-    {
-        $request = new Request();
-        $request->clientKey = $clientKey;
-        $request->area = $this->area;
-        $request->collection = $this->collection;
-        $request->userId = $this->userId;
-        $request->query = $this->query;
-        $request->fields = $this->fields;
-        $request->orFields = $this->orFields;
-        $request->language = $this->language;
-        $request->biasingProfile = $this->biasingProfile;
-        $request->pageSize = $this->pageSize;
-        $request->skip = $this->skip;
-        $request->customUrlParams = $this->customUrlParams;
-        $request->refinements = $this->generateSelectedRefinements($this->navigations);
-        $request->restrictNavigation = $this->restrictNavigation;
+    if (!empty($this->excludedNavigations)) {
+      $request->excludedNavigations = $this->excludedNavigations;
+    }
 
-        if (!empty($this->biasing)) {
-            $request->biasing = self::convertBiasing($this->biasing);
-        }
+    $pruneRefinements = $this->pruneRefinements;
+    if (isset($pruneRefinements) && $pruneRefinements === false) {
+      $request->pruneRefinements = false;
+    }
 
-        if (!empty($this->includedNavigations)) {
-            $request->includedNavigations = $this->includedNavigations;
-        }
+    $disableAutocorrection = $this->disableAutocorrection;
+    if (isset($disableAutocorrection) && $disableAutocorrection === true) {
+      $request->disableAutocorrection = true;
+    }
 
-        if (!empty($this->excludedNavigations)) {
-            $request->excludedNavigations = $this->excludedNavigations;
-        }
+    $wildcardSearchEnabled = $this->wildcardSearchEnabled;
+    if (isset($wildcardSearchEnabled) && $wildcardSearchEnabled === true) {
+      $request->wildcardSearchEnabled = true;
+    }
 
-        $pruneRefinements = $this->pruneRefinements;
-        if (isset($pruneRefinements) && $pruneRefinements === false) {
-            $request->pruneRefinements = false;
-        }
-
-        $disableAutocorrection = $this->disableAutocorrection;
-        if (isset($disableAutocorrection) && $disableAutocorrection === true) {
-            $request->disableAutocorrection = true;
-        }
-
-        $wildcardSearchEnabled = $this->wildcardSearchEnabled;
-        if (isset($wildcardSearchEnabled) && $wildcardSearchEnabled === true) {
-            $request->wildcardSearchEnabled = true;
-        }
-
-        if (!empty($this->sort)) {
-            foreach ($this->sort as $s) {
-                array_push($request->sort, $this->convertSort($s));
-            }
-        }
+    if (!empty($this->sort)) {
+      foreach ($this->sort as $s) {
+        array_push($request->sort, $this->convertSort($s));
+      }
+    }
 
 //        $returnBinary = $this->returnBinary;
 //        if (isset($returnBinary) && $returnBinary === true) {
 //            $request->returnBinary = true;
 //        }
 
-        return $request;
-    }
+    return $request;
+  }
 
-    /**
-     * @param Navigation[] $navigations
-     *
-     * @return Refinement[]
-     */
-    private function generateSelectedRefinements($navigations)
-    {
-        $refinements = [];
-        foreach ($navigations as $key => $navigation) {
-            foreach ($navigation->getRefinements() as $refinement) {
-                switch ($refinement->getType()) {
-                    case Type::Range: {
-                        /** @var RefinementRange $rr */
-                        $rr = $refinement;
-                        $selectedRefinementRange = new SelectedRefinementRange();
-                        $selectedRefinementRange
-                            ->setNavigationName($navigation->getName())
-                            ->setLow($rr->getLow())
-                            ->setHigh($rr->getHigh())
-                            ->setExclude($rr->isExclude());
+  /**
+   * @param Navigation[] $navigations
+   *
+   * @return Refinement[]
+   */
+  private function generateSelectedRefinements($navigations)
+  {
+    $refinements = [];
+    foreach ($navigations as $key => $navigation) {
+      foreach ($navigation->getRefinements() as $refinement) {
+        switch ($refinement->getType()) {
+          case Type::Range: {
+            /** @var RefinementRange $rr */
+            $rr = $refinement;
+            $selectedRefinementRange = new SelectedRefinementRange();
+            $selectedRefinementRange
+                ->setNavigationName($navigation->getName())
+                ->setLow($rr->getLow())
+                ->setHigh($rr->getHigh())
+                ->setExclude($rr->isExclude());
 
-                        array_push($refinements, $selectedRefinementRange);
-                        break;
-                    }
-                    case Type::Value: {
-                        /** @var RefinementValue $rv */
-                        $rv = $refinement;
-                        $selectedRefinementValue = new SelectedRefinementValue();
-                        $selectedRefinementValue
-                            ->setNavigationName($navigation->getName())
-                            ->setValue($rv->getValue())
-                            ->setExclude($rv->isExclude());
+            array_push($refinements, $selectedRefinementRange);
+            break;
+          }
+          case Type::Value: {
+            /** @var RefinementValue $rv */
+            $rv = $refinement;
+            $selectedRefinementValue = new SelectedRefinementValue();
+            $selectedRefinementValue
+                ->setNavigationName($navigation->getName())
+                ->setValue($rv->getValue())
+                ->setExclude($rv->isExclude());
 
-                        array_push($refinements, $selectedRefinementValue);
-                        break;
-                    }
-                }
-            }
+            array_push($refinements, $selectedRefinementValue);
+            break;
+          }
         }
-        return $refinements;
+      }
+    }
+    return $refinements;
+  }
+
+  /**
+   * @param string $clientKey Your client key.
+   *
+   * @return string JSON representation of request to Bridge.
+   */
+  public function getBridgeJsonRefinementSearch($clientKey)
+  {
+    $data = new Request();
+    $data->clientKey = $clientKey;
+    $data->collection = $this->collection;
+    $data->area = $this->area;
+    $data->refinementQuery = $this->query;
+
+    $wildcardSearchEnabled = $this->wildcardSearchEnabled;
+    if (isset($wildcardSearchEnabled) && $wildcardSearchEnabled === true) {
+      $data->wildcardSearchEnabled = true;
     }
 
-    /**
-     * @param string $clientKey Your client key.
-     *
-     * @return string JSON representation of request to Bridge.
-     */
-    public function getBridgeJsonRefinementSearch($clientKey)
-    {
-        $data = new Request();
-        $data->clientKey = $clientKey;
-        $data->collection = $this->collection;
-        $data->area = $this->area;
-        $data->refinementQuery = $this->query;
+    return $this->requestToJson($data);
+  }
 
-        $wildcardSearchEnabled = $this->wildcardSearchEnabled;
-        if (isset($wildcardSearchEnabled) && $wildcardSearchEnabled === true) {
-            $data->wildcardSearchEnabled = true;
-        }
+  public function __construct()
+  {
+    $this->serializer = SerializerFactory::build();
+  }
 
-        return $this->requestToJson($data);
+  /**
+   * @return string The current search string.
+   */
+  public function getQuery()
+  {
+    return $this->query;
+  }
+
+  /**
+   * @param string $query The search string.
+   */
+  public function setQuery($query)
+  {
+    $this->query = $query;
+  }
+
+  /**
+   * @return string The data sub-collection.
+   */
+  public function getCollection()
+  {
+    return $this->collection;
+  }
+
+  /**
+   * @param string $collection The string representation of a collection query.
+   */
+  public function setCollection($collection)
+  {
+    $this->collection = $collection;
+  }
+
+  /**
+   * @return string The area name.
+   */
+  public function getArea()
+  {
+    return $this->area;
+  }
+
+  /**
+   * @param string $area The area name.
+   */
+  public function setArea($area)
+  {
+    $this->area = $area;
+  }
+
+  /**
+   * @return string[] A list of metadata fields that will be returned by the search engine.
+   */
+  public function getFields()
+  {
+    return $this->fields;
+  }
+
+  /**
+   * @return string[] A list of the fields that the search service will treat as OR'able.
+   */
+  public function getOrFields()
+  {
+    return $this->orFields;
+  }
+
+  /**
+   * @param string[] $fields A list of case-sensitive names of the attributes to return.
+   */
+  public function addFields($fields)
+  {
+    $this->fields = array_merge($this->fields, $fields);
+  }
+
+  /**
+   * @return string[] A list of which navigations to return from the bridge.
+   */
+  public function getIncludedNavigations()
+  {
+    return $this->includedNavigations;
+  }
+
+  /**
+   * @param string[] $navigations A list of which navigations to return from the bridge.
+   */
+  public function addIncludedNavigations($navigations)
+  {
+    $this->includedNavigations = array_merge($this->includedNavigations, $navigations);
+  }
+
+  /**
+   * @return string[] A list of which navigations to not return from the bridge.
+   */
+  public function getExcludedNavigations()
+  {
+    return $this->excludedNavigations;
+  }
+
+  /**
+   * @param string[] $navigations A list of which navigations to not return from the bridge.
+   */
+  public function addExcludedNavigations($navigations)
+  {
+    $this->excludedNavigations = array_merge($this->excludedNavigations, $navigations);
+  }
+
+  /**
+   * @return Navigation[]
+   */
+  public function &getNavigations()
+  {
+    return $this->navigations;
+  }
+
+  /**
+   * @param Navigation[] $navigations
+   */
+  public function setNavigations($navigations)
+  {
+    $this->navigations = $navigations;
+  }
+
+  /**
+   * @param string $name The case-sensitive name of the attribute to return.
+   */
+  public function addField($name)
+  {
+    array_push($this->fields, $name);
+  }
+
+  /**
+   * @param string $name Field that should be treated as OR.
+   */
+  public function addOrField($name)
+  {
+    array_push($this->orFields, $name);
+  }
+
+  /**
+   * @param string[] $fields A list of fields that should be treated as OR.
+   */
+  public function addOrFields($fields)
+  {
+    $this->orFields = array_merge($this->orFields, $fields);
+  }
+
+  /**
+   * @param string $name  The parameter name.
+   * @param string $value The parameter value.
+   */
+  public function addCustomUrlParamByName($name, $value)
+  {
+    $param = new CustomUrlParam();
+    $this->addCustomUrlParam($param->setKey($name)->setValue($value));
+  }
+
+  /**
+   * @param CustomUrlParam $param Set an additional parameter that can be used to trigger rules.
+   */
+  public function addCustomUrlParam($param)
+  {
+    array_push($this->customUrlParams, $param);
+  }
+
+  public function splitRefinements($refinementString)
+  {
+    if (StringUtils::isNotBlank($refinementString)) {
+      return preg_split(self::TILDE_REGEX, $refinementString, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+    }
+    return [];
+  }
+
+  /**
+   * @param string $refinementString A tilde separated list of refinements.
+   */
+  public function addRefinementsByString($refinementString)
+  {
+    if ($refinementString == null) {
+      return;
     }
 
-    public function __construct()
-    {
-        $this->serializer = SerializerFactory::build();
-    }
+    $refinementStrings = self::splitRefinements($refinementString);
+    foreach ($refinementStrings as $refinementString) {
+      if (empty($refinementString) || "=" == $refinementString) {
+        continue;
+      }
+      $colon = strpos($refinementString, Symbol::COLON);
+      $equals = strpos($refinementString, Symbol::EQUAL);
+      //when === false, it means it did not find the substring in the string
+      $isRange = !($colon === false) && ($equals === false);
 
-    /**
-     * @return string The current search string.
-     */
-    public function getQuery()
-    {
-        return $this->query;
-    }
-
-    /**
-     * @param string $query The search string.
-     */
-    public function setQuery($query)
-    {
-        $this->query = $query;
-    }
-
-    /**
-     * @return string The data sub-collection.
-     */
-    public function getCollection()
-    {
-        return $this->collection;
-    }
-
-    /**
-     * @param string $collection The string representation of a collection query.
-     */
-    public function setCollection($collection)
-    {
-        $this->collection = $collection;
-    }
-
-    /**
-     * @return string The area name.
-     */
-    public function getArea()
-    {
-        return $this->area;
-    }
-
-    /**
-     * @param string $area The area name.
-     */
-    public function setArea($area)
-    {
-        $this->area = $area;
-    }
-
-    /**
-     * @return string[] A list of metadata fields that will be returned by the search engine.
-     */
-    public function getFields()
-    {
-        return $this->fields;
-    }
-
-    /**
-     * @return string[] A list of the fields that the search service will treat as OR'able.
-     */
-    public function getOrFields()
-    {
-        return $this->orFields;
-    }
-
-    /**
-     * @param string[] $fields A list of case-sensitive names of the attributes to return.
-     */
-    public function addFields($fields)
-    {
-        $this->fields = array_merge($this->fields, $fields);
-    }
-
-    /**
-     * @return string[] A list of which navigations to return from the bridge.
-     */
-    public function getIncludedNavigations()
-    {
-        return $this->includedNavigations;
-    }
-
-    /**
-     * @param string[] $navigations A list of which navigations to return from the bridge.
-     */
-    public function addIncludedNavigations($navigations)
-    {
-        $this->includedNavigations = array_merge($this->includedNavigations, $navigations);
-    }
-
-    /**
-     * @return string[] A list of which navigations to not return from the bridge.
-     */
-    public function getExcludedNavigations()
-    {
-        return $this->excludedNavigations;
-    }
-
-    /**
-     * @param string[] $navigations A list of which navigations to not return from the bridge.
-     */
-    public function addExcludedNavigations($navigations)
-    {
-        $this->excludedNavigations = array_merge($this->excludedNavigations, $navigations);
-    }
-
-    /**
-     * @return Navigation[]
-     */
-    public function &getNavigations()
-    {
-        return $this->navigations;
-    }
-
-    /**
-     * @param Navigation[] $navigations
-     */
-    public function setNavigations($navigations)
-    {
-        $this->navigations = $navigations;
-    }
-
-    /**
-     * @param string $name The case-sensitive name of the attribute to return.
-     */
-    public function addField($name)
-    {
-        array_push($this->fields, $name);
-    }
-
-    /**
-     * @param string $name Field that should be treated as OR.
-     */
-    public function addOrField($name)
-    {
-        array_push($this->orFields, $name);
-    }
-
-    /**
-     * @param string[] $fields A list of fields that should be treated as OR.
-     */
-    public function addOrFields($fields)
-    {
-        $this->orFields = array_merge($this->orFields, $fields);
-    }
-
-    /**
-     * @param string $name  The parameter name.
-     * @param string $value The parameter value.
-     */
-    public function addCustomUrlParamByName($name, $value)
-    {
-        $param = new CustomUrlParam();
-        $this->addCustomUrlParam($param->setKey($name)->setValue($value));
-    }
-
-    /**
-     * @param CustomUrlParam $param Set an additional parameter that can be used to trigger rules.
-     */
-    public function addCustomUrlParam($param)
-    {
-        array_push($this->customUrlParams, $param);
-    }
-
-    public function splitRefinements($refinementString)
-    {
-        if (StringUtils::isNotBlank($refinementString)) {
-            return preg_split(self::TILDE_REGEX, $refinementString, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
-        }
-        return [];
-    }
-
-    /**
-     * @param string $refinementString A tilde separated list of refinements.
-     */
-    public function addRefinementsByString($refinementString)
-    {
-        if ($refinementString == null) {
-            return;
-        }
-
-        $refinementStrings = self::splitRefinements($refinementString);
-        foreach ($refinementStrings as $refinementString) {
-            if (empty($refinementString) || "=" == $refinementString) {
-                continue;
-            }
-            $colon = strpos($refinementString, Symbol::COLON);
-            $equals = strpos($refinementString, Symbol::EQUAL);
-            //when === false, it means it did not find the substring in the string
-            $isRange = !($colon === false) && ($equals === false);
-
-            $refinement = null;
-            if ($isRange) {
-                $nameValue = explode(Symbol::COLON, $refinementString, 2);
-                $refinement = new RefinementRange();
-                if (StringUtils::endsWith($nameValue[1], Symbol::DOUBLE_DOT)) {
-                    $value = explode(Symbol::DOUBLE_DOT, $nameValue[1]);
-                    $refinement->setLow($value[0]);
-                    $refinement->setHigh("");
-                } else if (StringUtils::startsWith($nameValue[1], Symbol::DOUBLE_DOT)) {
-                    $refinement->setLow("");
-                    $value = explode(Symbol::DOUBLE_DOT, $nameValue[1]);
-                    $refinement->setHigh($value[1]);
-                } else {
-                    $lowHigh = explode(Symbol::DOUBLE_DOT, $nameValue[1]);
-                    $refinement->setLow($lowHigh[0]);
-                    $refinement->setHigh($lowHigh[1]);
-                }
-            } else {
-                $nameValue = explode(Symbol::EQUAL, $refinementString, 2);
-                $refinement = new RefinementValue();
-                $refinement->setValue($nameValue[1]);
-            }
-            if (!empty($nameValue[0])) {
-                $this->addRefinement($nameValue[0], $refinement);
-            }
-        }
-    }
-
-    /**
-     * @param string     $navigationName The name of the Navigation.
-     * @param Refinement $refinement     A RefinementRange or RefinementValue object.
-     */
-    public function addRefinement($navigationName, $refinement)
-    {
-        $navigation = null;
-        if (array_key_exists($navigationName, $this->navigations)) {
-            $navigation = $this->navigations[$navigationName];
-        } else {
-            $navigation = new Navigation();
-            $navigation->setName($navigationName)->setRange($refinement instanceof SelectedRefinementRange);
-            $this->navigations[$navigationName] = $navigation;
-        }
-        $refinements = $navigation->getRefinements();
-        array_push($refinements, $refinement);
-        $navigation->setRefinements($refinements);
-    }
-
-    /**
-     * @param string $navigationName The name of the refinement.
-     * @param mixed  $low            The low value.
-     * @param mixed  $high           The high value.
-     * @param bool   $exclude        True if the results should exclude this range refinement, false otherwise.
-     */
-    public function addRangeRefinement($navigationName, $low, $high, $exclude = false)
-    {
+      $refinement = null;
+      if ($isRange) {
+        $nameValue = explode(Symbol::COLON, $refinementString, 2);
         $refinement = new RefinementRange();
-        $this->addRefinement($navigationName, $refinement->setLow($low)->setHigh($high)->setExclude($exclude));
+        if (StringUtils::endsWith($nameValue[1], Symbol::DOUBLE_DOT)) {
+          $value = explode(Symbol::DOUBLE_DOT, $nameValue[1]);
+          $refinement->setLow($value[0]);
+          $refinement->setHigh("");
+        } else if (StringUtils::startsWith($nameValue[1], Symbol::DOUBLE_DOT)) {
+          $refinement->setLow("");
+          $value = explode(Symbol::DOUBLE_DOT, $nameValue[1]);
+          $refinement->setHigh($value[1]);
+        } else {
+          $lowHigh = explode(Symbol::DOUBLE_DOT, $nameValue[1]);
+          $refinement->setLow($lowHigh[0]);
+          $refinement->setHigh($lowHigh[1]);
+        }
+      } else {
+        $nameValue = explode(Symbol::EQUAL, $refinementString, 2);
+        $refinement = new RefinementValue();
+        $refinement->setValue($nameValue[1]);
+      }
+      if (!empty($nameValue[0])) {
+        $this->addRefinement($nameValue[0], $refinement);
+      }
     }
+  }
 
-    /**
-     * @param string $navigationName The name of the refinement.
-     * @param mixed  $value          The refinement value.
-     * @param bool   $exclude        True if the results should exclude this value refinement, false otherwise.
-     */
-    public function addValueRefinement($navigationName, $value, $exclude = false)
-    {
-        $refinement = new RefinementValue();;
-        $this->addRefinement($navigationName, $refinement->setValue($value)->setExclude($exclude));
+  /**
+   * @param string     $navigationName The name of the Navigation.
+   * @param Refinement $refinement     A RefinementRange or RefinementValue object.
+   */
+  public function addRefinement($navigationName, $refinement)
+  {
+    $navigation = null;
+    if (array_key_exists($navigationName, $this->navigations)) {
+      $navigation = $this->navigations[$navigationName];
+    } else {
+      $navigation = new Navigation();
+      $navigation->setName($navigationName)->setRange($refinement instanceof SelectedRefinementRange);
+      $this->navigations[$navigationName] = $navigation;
     }
+    $refinements = $navigation->getRefinements();
+    array_push($refinements, $refinement);
+    $navigation->setRefinements($refinements);
+  }
 
-    /**
-     * @return bool Are refinements with zero counts being removed.
-     */
-    public function isPruneRefinements()
-    {
-        return $this->pruneRefinements;
-    }
+  /**
+   * @param string $navigationName The name of the refinement.
+   * @param mixed  $low            The low value.
+   * @param mixed  $high           The high value.
+   * @param bool   $exclude        True if the results should exclude this range refinement, false otherwise.
+   */
+  public function addRangeRefinement($navigationName, $low, $high, $exclude = false)
+  {
+    $refinement = new RefinementRange();
+    $this->addRefinement($navigationName, $refinement->setLow($low)->setHigh($high)->setExclude($exclude));
+  }
 
-    /**
-     * @param bool $pruneRefinements Specifies whether refinements should be pruned.
-     */
-    public function setPruneRefinements($pruneRefinements)
-    {
-        $this->pruneRefinements = $pruneRefinements;
-    }
+  /**
+   * @param string $navigationName The name of the refinement.
+   * @param mixed  $value          The refinement value.
+   * @param bool   $exclude        True if the results should exclude this value refinement, false otherwise.
+   */
+  public function addValueRefinement($navigationName, $value, $exclude = false)
+  {
+    $refinement = new RefinementValue();;
+    $this->addRefinement($navigationName, $refinement->setValue($value)->setExclude($exclude));
+  }
 
-    /**
-     * @return MSort[] The current list of sort parameters.
-     */
-    public function &getSort()
-    {
-        return $this->sort;
-    }
+  /**
+   * @return bool Are refinements with zero counts being removed.
+   */
+  public function isPruneRefinements()
+  {
+    return $this->pruneRefinements;
+  }
 
-    /**
-     * @param MSort[] $sort Any number of sort criteria.
-     */
-    public function setSort($sort)
-    {
-        $this->sort = $sort;
-    }
+  /**
+   * @param bool $pruneRefinements Specifies whether refinements should be pruned.
+   */
+  public function setPruneRefinements($pruneRefinements)
+  {
+    $this->pruneRefinements = $pruneRefinements;
+  }
 
-    /**
-     * @return int The number of documents to skip.
-     */
-    public function getSkip()
-    {
-        return $this->skip;
-    }
+  /**
+   * @return MSort[] The current list of sort parameters.
+   */
+  public function &getSort()
+  {
+    return $this->sort;
+  }
 
-    /**
-     * @param int $skip The number of documents to skip.
-     */
-    public function setSkip($skip)
-    {
-        $this->skip = $skip;
-    }
+  /**
+   * @param MSort[] $sort Any number of sort criteria.
+   */
+  public function setSort($sort)
+  {
+    $this->sort = $sort;
+  }
 
-    /**
-     * @return CustomUrlParam[] A list of custom url params.
-     */
-    public function getCustomUrlParams()
-    {
-        return $this->customUrlParams;
-    }
+  /**
+   * @return int The number of documents to skip.
+   */
+  public function getSkip()
+  {
+    return $this->skip;
+  }
 
-    /**
-     * @param CustomUrlParam[] $customUrlParams Set the custom url params.
-     */
-    public function setCustomUrlParams($customUrlParams)
-    {
-        $this->customUrlParams = $customUrlParams;
-    }
+  /**
+   * @param int $skip The number of documents to skip.
+   */
+  public function setSkip($skip)
+  {
+    $this->skip = $skip;
+  }
+
+  /**
+   * @return CustomUrlParam[] A list of custom url params.
+   */
+  public function getCustomUrlParams()
+  {
+    return $this->customUrlParams;
+  }
+
+  /**
+   * @param CustomUrlParam[] $customUrlParams Set the custom url params.
+   */
+  public function setCustomUrlParams($customUrlParams)
+  {
+    $this->customUrlParams = $customUrlParams;
+  }
 
 //    /**
 //     * @return bool Is return JSON set to true.
@@ -605,339 +605,342 @@ class Query
 //        $this->returnBinary = $returnBinary;
 //    }
 
-    /**
-     * @return string The current language restrict value.
-     */
-    public function getLanguage()
-    {
-        return $this->language;
-    }
+  /**
+   * @return string The current language restrict value.
+   */
+  public function getLanguage()
+  {
+    return $this->language;
+  }
 
-    /**
-     * @param string $language The value for language restrict.
-     */
-    public function setLanguage($language)
-    {
-        $this->language = $language;
-    }
+  /**
+   * @param string $language The value for language restrict.
+   */
+  public function setLanguage($language)
+  {
+    $this->language = $language;
+  }
 
-    /**
-     * @return string The current biasing profile name.
-     */
-    public function getBiasingProfile()
-    {
-        return $this->biasingProfile;
-    }
+  /**
+   * @return string The current biasing profile name.
+   */
+  public function getBiasingProfile()
+  {
+    return $this->biasingProfile;
+  }
 
-    /**
-     * @param string $biasingProfile Override the biasing profile used for this query.
-     */
-    public function setBiasingProfile($biasingProfile)
-    {
-        $this->biasingProfile = $biasingProfile;
-    }
+  /**
+   * @param string $biasingProfile Override the biasing profile used for this query.
+   */
+  public function setBiasingProfile($biasingProfile)
+  {
+    $this->biasingProfile = $biasingProfile;
+  }
 
-    /**
-     * @return int The current page size.
-     */
-    public function getPageSize()
-    {
-        return $this->pageSize;
-    }
+  /**
+   * @return int The current page size.
+   */
+  public function getPageSize()
+  {
+    return $this->pageSize;
+  }
 
-    /**
-     * @param int $pageSize The number of records to return with the query.
-     */
-    public function setPageSize($pageSize)
-    {
-        $this->pageSize = $pageSize;
-    }
+  /**
+   * @param int $pageSize The number of records to return with the query.
+   */
+  public function setPageSize($pageSize)
+  {
+    $this->pageSize = $pageSize;
+  }
 
-    /**
-     * @return boolean
-     */
-    public function isDisableAutocorrection()
-    {
-        return $this->disableAutocorrection;
-    }
+  /**
+   * @return boolean
+   */
+  public function isDisableAutocorrection()
+  {
+    return $this->disableAutocorrection;
+  }
 
-    /**
-     * @param boolean $disableAutocorrection Specifies whether the auto-correction behavior should be disabled.
-     *                                       By default, when no results are returned for the given query (and there is
-     *                                       a did-you-mean available), the first did-you-mean is automatically queried
-     *                                       instead.
-     */
-    public function setDisableAutocorrection($disableAutocorrection)
-    {
-        $this->disableAutocorrection = $disableAutocorrection;
-    }
+  /**
+   * @param boolean $disableAutocorrection Specifies whether the auto-correction behavior should be disabled.
+   *                                       By default, when no results are returned for the given query (and there is
+   *                                       a did-you-mean available), the first did-you-mean is automatically queried
+   *                                       instead.
+   */
+  public function setDisableAutocorrection($disableAutocorrection)
+  {
+    $this->disableAutocorrection = $disableAutocorrection;
+  }
 
-    /**
-     * @return boolean
-     */
-    public function isWildcardSearchEnabled()
-    {
-        return $this->wildcardSearchEnabled;
-    }
+  /**
+   * @return boolean
+   */
+  public function isWildcardSearchEnabled()
+  {
+    return $this->wildcardSearchEnabled;
+  }
 
-    /**
-     * @param boolean $wildcardSearchEnabled Indicate if the *(star) character in the search string should be treated
-     *                                       as a wildcard prefix search. For example, `sta*` will match `star` and
-     *                                       `start`.
-     */
-    public function setWildcardSearchEnabled($wildcardSearchEnabled)
-    {
-        $this->wildcardSearchEnabled = $wildcardSearchEnabled;
-    }
+  /**
+   * @param boolean $wildcardSearchEnabled Indicate if the *(star) character in the search string should be treated
+   *                                       as a wildcard prefix search. For example, `sta*` will match `star` and
+   *                                       `start`.
+   */
+  public function setWildcardSearchEnabled($wildcardSearchEnabled)
+  {
+    $this->wildcardSearchEnabled = $wildcardSearchEnabled;
+  }
 
-    /**
-     * <b>Warning</b>  This will count as two queries against your search index.
-     *
-     * Typically, this feature is used when you have a large number of navigation items that will overwhelm the end
-     * user. It works by using one of the existing navigation items to decide what the query is about and fires a second
-     * query to restrict the navigation to the most relevant set of navigation items for this search term.
-     *
-     * For example, if you pass in a search of `paper` and a restrict navigation of `category:2`
-     *
-     * The bridge will find the category navigation refinements in the first query and fire a second query for the top 2
-     * most populous categories.  Therefore, a search for something generic like "paper" will bring back top category
-     * matches like copy paper (1,030), paper pads (567).  The bridge will fire off the second query with the search
-     * term, plus an OR refinement with the most likely categories.  The navigation items in the first query are
-     * entirely replaced with the navigation items in the second query, except for the navigation that was used for the
-     * restriction so that users still have the ability to navigate by all category types.
-     *
-     * @param RestrictNavigation $restrictNavigation Restriction criteria
-     */
-    public function setRestrictNavigation($restrictNavigation)
-    {
-        $this->restrictNavigation = $restrictNavigation;
-    }
+  /**
+   * <b>Warning</b>  This will count as two queries against your search index.
+   *
+   * Typically, this feature is used when you have a large number of navigation items that will overwhelm the end
+   * user. It works by using one of the existing navigation items to decide what the query is about and fires a second
+   * query to restrict the navigation to the most relevant set of navigation items for this search term.
+   *
+   * For example, if you pass in a search of `paper` and a restrict navigation of `category:2`
+   *
+   * The bridge will find the category navigation refinements in the first query and fire a second query for the top 2
+   * most populous categories.  Therefore, a search for something generic like "paper" will bring back top category
+   * matches like copy paper (1,030), paper pads (567).  The bridge will fire off the second query with the search
+   * term, plus an OR refinement with the most likely categories.  The navigation items in the first query are
+   * entirely replaced with the navigation items in the second query, except for the navigation that was used for the
+   * restriction so that users still have the ability to navigate by all category types.
+   *
+   * @param RestrictNavigation $restrictNavigation Restriction criteria
+   */
+  public function setRestrictNavigation($restrictNavigation)
+  {
+    $this->restrictNavigation = $restrictNavigation;
+  }
 
-    /** @return RestrictNavigation */
-    public function getRestrictNavigation()
-    {
-        return $this->restrictNavigation;
-    }
+  /** @return RestrictNavigation */
+  public function getRestrictNavigation()
+  {
+    return $this->restrictNavigation;
+  }
 
-    /**
-     * @return MBiasing
-     */
-    public function getBiasing()
-    {
-        return $this->biasing;
-    }
+  /**
+   * @return MBiasing
+   */
+  public function getBiasing()
+  {
+    return $this->biasing;
+  }
 
-    /**
-     * Add a biasing profile, which is defined at query time.
-     *
-     * @param MBiasing $biasing
-     */
-    public function setBiasing($biasing)
-    {
-        $this->biasing = $biasing;
-    }
+  /**
+   * Add a biasing profile, which is defined at query time.
+   *
+   * @param MBiasing $biasing
+   */
+  public function setBiasing($biasing)
+  {
+    $this->biasing = $biasing;
+  }
 
-    /**
-     * @param string[] $bringToTop
-     */
-    public function setBringToTop($bringToTop) {
-        if (empty($this->biasing)) {
-            $this->biasing = new MBiasing();
+  /**
+   * @param string[] $bringToTop
+   */
+  public function setBringToTop($bringToTop)
+  {
+    if (empty($this->biasing)) {
+      $this->biasing = new MBiasing();
+    }
+    $this->biasing->setBringToTop($bringToTop);
+  }
+
+  /**
+   * @param boolean $augment
+   */
+  public function setBiasingAugment($augment)
+  {
+    if (empty($this->biasing)) {
+      $this->biasing = new MBiasing();
+    }
+    $this->biasing->setAugmentbiases($augment);
+  }
+
+  /**
+   * @param float $influence
+   */
+  public function setInfluence($influence)
+  {
+    if (empty($this->biasing)) {
+      $this->biasing = new MBiasing();
+    }
+    $this->biasing->setInfluence($influence);
+  }
+
+  /**
+   * @return string A string representation of all of the currently set refinements.
+   */
+  public function getRefinementString()
+  {
+    if (!empty($this->navigations)) {
+      $builder = new StringBuilder();
+      foreach ($this->navigations as $n) {
+        foreach ($n->getRefinements() as $r) {
+          $builder->append(Symbol::TILDE)->append($n->getName())->append($r->toTildeString());
         }
-        $this->biasing->setBringToTop($bringToTop);
+      }
+      if ($builder->length() > 0) {
+        return $builder->__toString();
+      }
     }
+    return null;
+  }
 
-    /**
-     * @param boolean $augment
-     */
-    public function setBiasingAugment($augment) {
-        if (empty($this->biasing)) {
-            $this->biasing = new MBiasing();
+  /**
+   * @return string A string representation of all of the currently set custom url parameters.
+   */
+  public function getCustomUrlParamsString()
+  {
+    if (!empty($this->customUrlParams)) {
+      $builder = new StringBuilder();
+      foreach ($this->customUrlParams as $c) {
+        $builder->append(Symbol::TILDE)->append($c->getKey())->append(Symbol::EQUAL)->append($c->getValue());
+      }
+      if ($builder->length() > 0) {
+        return $builder->__toString();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @param MSort $sort
+   *
+   * @return RSort
+   */
+  protected static function convertSort($sort)
+  {
+    /** @var RSort $convertedSort */
+    $convertedSort = null;
+    if (!empty($sort)) {
+      $convertedSort = new RSort();
+      $convertedSort->setField($sort->getField());
+      switch ($sort->getOrder()) {
+        case MSort\Order::Ascending:
+          $convertedSort->setOrder(RSort\Order::Ascending);
+          break;
+        case MSort\Order::Descending:
+          $convertedSort->setOrder(RSort\Order::Descending);
+          break;
+      }
+    }
+    return $convertedSort;
+  }
+
+  /**
+   * @param MMatchStrategy $strategy
+   *
+   * @return RMatchStrategy
+   */
+  protected static function convertPartialMatchStrategy($strategy)
+  {
+    /** @var RMatchStrategy $convertedStrategy */
+    $convertedStrategy = null;
+    if (!empty($strategy)) {
+      $rules = $strategy->getRules();
+      if (!empty($rules)) {
+        $convertedStrategy = new RMatchStrategy();
+        /** @var MPartialMatchRule $r */
+        foreach ($rules as $r) {
+          array_push($rules, Query::convertPartialMatchRule($r));
         }
-        $this->biasing->setAugmentbiases($augment);
+        $strategy->setRules($rules);
+      }
     }
+    return $convertedStrategy;
+  }
 
-    /**
-     * @param float $influence
-     */
-    public function setInfluence($influence) {
-        if (empty($this->biasing)) {
-            $this->biasing = new MBiasing();
-        }
-        $this->biasing->setInfluence($influence);
+  /**
+   * @param MPartialMatchRule $rule
+   *
+   * @return RPartialMatchRule
+   */
+  protected static function convertPartialMatchRule($rule)
+  {
+    /** @var RPartialMatchRule $convertedRule */
+    $convertedRule = null;
+    if (!empty($rule)) {
+      $convertedRule = new RPartialMatchRule();
+      $convertedRule->setTerms($rule->getTerms())
+          ->setTermsGreaterThan($rule->getTermsGreaterThan())
+          ->setMustMatch($rule->getMustMatch())
+          ->setPercentage($rule->isPercentage());
     }
+    return $convertedRule;
+  }
 
-    /**
-     * @return string A string representation of all of the currently set refinements.
-     */
-    public function getRefinementString()
-    {
-        if (!empty($this->navigations)) {
-            $builder = new StringBuilder();
-            foreach ($this->navigations as $n) {
-                foreach ($n->getRefinements() as $r) {
-                    $builder->append(Symbol::TILDE)->append($n->getName())->append($r->toTildeString());
-                }
-            }
-            if ($builder->length() > 0) {
-                return $builder->__toString();
-            }
-        }
-        return null;
+  /**
+   * @param MBias $bias
+   *
+   * @return Bias
+   */
+  protected static function convertBias($bias)
+  {
+    return (new MBias())->setName($bias->getName())->setContent($bias->getContent())->setStrength($bias->getStrength());
+  }
+
+  /**
+   * @param MBias[] $biases
+   *
+   * @return Bias[]
+   */
+  protected static function convertBiases($biases)
+  {
+    return array_map('self::convertBias', $biases);
+  }
+
+  /**
+   * @param MBiasing $biasing
+   *
+   * @return Biasing
+   */
+  protected static function convertBiasing($biasing)
+  {
+    /** @var Biasing $convertedBiasing */
+    $convertedBiasing = new Biasing();
+
+    /** @var  $hasData */
+    $hasData = false;
+
+    if (!empty($biasing)) {
+      // != must be used because empty() only accepts variables in PHP 5.4
+      if ($biasing->getBringToTop() != array()) {
+        $convertedBiasing->setBringToTop($biasing->getBringToTop());
+        $hasData = true;
+      }
+      if ($biasing->getBiases() != array()) {
+        $convertedBiasing->setBiases(self::convertBiases($biasing->getBiases()));
+        $convertedBiasing->setAugmentBiases($biasing->isAugmentBiases());
+        $hasData = true;
+      }
+      if ($biasing->getInfluence() !== null) {
+        $convertedBiasing->setInfluence($biasing->getInfluence());
+        $hasData = true;
+      }
     }
+    return $hasData ? $convertedBiasing : null;
+  }
 
-    /**
-     * @return string A string representation of all of the currently set custom url parameters.
-     */
-    public function getCustomUrlParamsString()
-    {
-        if (!empty($this->customUrlParams)) {
-            $builder = new StringBuilder();
-            foreach ($this->customUrlParams as $c) {
-                $builder->append(Symbol::TILDE)->append($c->getKey())->append(Symbol::EQUAL)->append($c->getValue());
-            }
-            if ($builder->length() > 0) {
-                return $builder->__toString();
-            }
-        }
-        return null;
-    }
+  /**
+   * @return string
+   */
+  public function getUserId()
+  {
+    return $this->userId;
+  }
 
-    /**
-     * @param MSort $sort
-     *
-     * @return RSort
-     */
-    protected static function convertSort($sort)
-    {
-        /** @var RSort $convertedSort */
-        $convertedSort = null;
-        if (!empty($sort)) {
-            $convertedSort = new RSort();
-            $convertedSort->setField($sort->getField());
-            switch ($sort->getOrder()) {
-                case MSort\Order::Ascending:
-                    $convertedSort->setOrder(RSort\Order::Ascending);
-                    break;
-                case MSort\Order::Descending:
-                    $convertedSort->setOrder(RSort\Order::Descending);
-                    break;
-            }
-        }
-        return $convertedSort;
-    }
-
-    /**
-     * @param MMatchStrategy $strategy
-     *
-     * @return RMatchStrategy
-     */
-    protected static function convertPartialMatchStrategy($strategy)
-    {
-        /** @var RMatchStrategy $convertedStrategy */
-        $convertedStrategy = null;
-        if (!empty($strategy)) {
-            $rules = $strategy->getRules();
-            if (!empty($rules)) {
-                $convertedStrategy = new RMatchStrategy();
-                /** @var MPartialMatchRule $r */
-                foreach ($rules as $r) {
-                    array_push($rules, Query::convertPartialMatchRule($r));
-                }
-                $strategy->setRules($rules);
-            }
-        }
-        return $convertedStrategy;
-    }
-
-    /**
-     * @param MPartialMatchRule $rule
-     *
-     * @return RPartialMatchRule
-     */
-    protected static function convertPartialMatchRule($rule)
-    {
-        /** @var RPartialMatchRule $convertedRule */
-        $convertedRule = null;
-        if (!empty($rule)) {
-            $convertedRule = new RPartialMatchRule();
-            $convertedRule->setTerms($rule->getTerms())
-                ->setTermsGreaterThan($rule->getTermsGreaterThan())
-                ->setMustMatch($rule->getMustMatch())
-                ->setPercentage($rule->isPercentage());
-        }
-        return $convertedRule;
-    }
-
-    /**
-     * @param MBias $bias
-     *
-     * @return Bias
-     */
-    protected static function convertBias($bias)
-    {
-        return (new MBias())->setName($bias->getName())->setContent($bias->getContent())->setStrength($bias->getStrength());
-    }
-
-    /**
-     * @param MBias[] $biases
-     *
-     * @return Bias[]
-     */
-    protected static function convertBiases($biases)
-    {
-        return array_map('self::convertBias', $biases);
-    }
-
-    /**
-     * @param MBiasing $biasing
-     *
-     * @return Biasing
-     */
-    protected static function convertBiasing($biasing)
-    {
-        /** @var Biasing $convertedBiasing */
-        $convertedBiasing = new Biasing();
-
-        /** @var  $hasData */
-        $hasData = false;
-
-        if (!empty($biasing)) {
-            // != must be used because empty() only accepts variables in PHP 5.4
-            if($biasing->getBringToTop() != array()) {
-                $convertedBiasing->setBringToTop($biasing->getBringToTop());
-                $hasData = true;
-            }
-            if($biasing->getBiases() != array()) {
-                $convertedBiasing->setBiases(self::convertBiases($biasing->getBiases()));
-                $convertedBiasing->setAugmentBiases($biasing->isAugmentBiases());
-                $hasData = true;
-            }
-            if($biasing->getInfluence() !== null) {
-                $convertedBiasing->setInfluence($biasing->getInfluence());
-                $hasData = true;
-            }
-        }
-        return $hasData ? $convertedBiasing : null;
-    }
-
-    /**
-     * @return string
-     */
-    public function getUserId()
-    {
-        return $this->userId;
-    }
-
-    /**
-     * @param string $userId
-     *
-     * @return Query
-     */
-    public function setUserId($userId)
-    {
-        $this->userId = $userId;
-        return $this;
-    }
+  /**
+   * @param string $userId
+   *
+   * @return Query
+   */
+  public function setUserId($userId)
+  {
+    $this->userId = $userId;
+    return $this;
+  }
 
 }

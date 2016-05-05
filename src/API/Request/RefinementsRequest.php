@@ -4,8 +4,8 @@ namespace GroupByInc\API\Request;
 
 class RefinementsRequest
 {
-    /** @var Request */
-    public $originalQuery;
-    /** @var string */
-    public $navigationName;
+  /** @var Request */
+  public $originalQuery;
+  /** @var string */
+  public $navigationName;
 }

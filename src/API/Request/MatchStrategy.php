@@ -4,27 +4,27 @@ namespace GroupByInc\API\Request;
 
 class MatchStrategy
 {
-    /** @var PartialMatchRule[] */
-    private $rules;
+  /** @var PartialMatchRule[] */
+  private $rules;
 
-    /**
-     * @return PartialMatchRule[]
-     */
-    public function getRules()
-    {
-        return $this->rules;
-    }
+  /**
+   * @return PartialMatchRule[]
+   */
+  public function getRules()
+  {
+    return $this->rules;
+  }
 
-    /**
-     * @param PartialMatchRule[] $rules
-     *
-     * @return MatchStrategy
-     */
-    public function setRules($rules)
-    {
-        $this->rules = $rules;
-        return $this;
-    }
+  /**
+   * @param PartialMatchRule[] $rules
+   *
+   * @return MatchStrategy
+   */
+  public function setRules($rules)
+  {
+    $this->rules = $rules;
+    return $this;
+  }
 
 
 }
