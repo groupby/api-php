@@ -247,6 +247,7 @@ class JsonDeserializeTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(Object::$RESULTS, $results);
 
         $json = json_decode(Json::$RESULTS);
+        $this->assertEquals($json->id, $results->getId());
         $this->assertEquals($json->area, $results->getArea());
         $this->assertEquals($json->query, $results->getQuery());
         $this->assertEquals($json->correctedQuery, $results->getCorrectedQuery());

@@ -63,7 +63,7 @@ class Json
 
         self::$REFINEMENTS_REQUEST = '{"originalQuery":' . self::$REQUEST . ',"navigationName":"height"}';
 
-        self::$RESULTS = '{"availableNavigation":[' . self::$NAVIGATION . '],' .
+        self::$RESULTS = '{"id":"1321asb","availableNavigation":[' . self::$NAVIGATION . '],' .
             '"selectedNavigation":[' . self::$NAVIGATION . '],' .
             '"clusters":[' . self::$CLUSTER . '],"records":[' . self::$RECORD . '],' .
             '"didYouMean":["square","skewer"],"relatedQueries":["squawk","ask"],' .

@@ -234,6 +234,7 @@ class Object
         self::$REFINEMENTS_REQUEST->navigationName = "height";
 
         self::$RESULTS = new Results();
+        self::$RESULTS->setId("1321asb");
         self::$RESULTS->setArea("christmas");
         self::$RESULTS->setBiasingProfile("unbiased");
         self::$RESULTS->setAvailableNavigation(array(Object::$NAVIGATION));
