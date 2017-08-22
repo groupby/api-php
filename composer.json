@@ -4,14 +4,16 @@
   "type": "library",
   "homepage": "http://www.github.com/groupby/api-php",
   "license": "MIT",
-  "authors": [
-    {
-      "name": "Ben Teichman",
-      "role": "developer"
-    }
-  ],
+  "authors": [{
+    "name": "Ben Teichman",
+    "role": "developer"
+  }],
   "support": {
     "issues": "https://github.com/groupby/api-php/issues"
+  },
+  "scripts": {
+    "test": "composer robo test",
+    "robo": "robo --ansi"
   },
   "require": {
     "php": ">=5.4.0",
@@ -22,7 +24,7 @@
     "monolog/monolog": "1.11.0",
     "phpunit/phpunit": "4.3.5",
     "phake/phake": "2.0.1",
-    "codegyre/robo": "0.5.2"
+    "consolidation/robo": "^1.1"
   },
   "autoload": {
     "classmap": [

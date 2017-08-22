@@ -9,15 +9,15 @@ GroupBy Search API
 
 ### Setup Instructions
 
-For more on robo php taskrunner see [here](http://codegyre.github.io/Robo/).
+For more on robo php taskrunner see [here](http://robo.li).
 
 ### To install
 
-    robo install
-  
-### To test
+    composer install
 
-    robo test
+### To install and test
+
+    composer test
 
 ### To add a dependency to this project
 

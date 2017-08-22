@@ -1,16 +1,16 @@
 <?php
 
-class RoboFile extends Robo\Tasks
+class RoboFile extends \Robo\Tasks
 {
 
-    public function install()
+    function install()
     {
         $this->taskComposerUpdate('./composer.phar')
             ->preferDist()
             ->run();
     }
 
-    public function test()
+    function test()
     {
         $this->install();
 

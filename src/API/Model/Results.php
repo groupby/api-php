@@ -7,6 +7,11 @@ use JMS\Serializer\Annotation as JMS;
 class Results
 {
   /**
+   * @var string
+   * @JMS\Type("string")
+   */
+  public $id;
+  /**
    * @var int
    * @JMS\Type("integer")
    */
@@ -99,6 +104,22 @@ class Results
    * @JMS\Type("array<string>")
    */
   public $warnings = array();
+
+  /**
+   * @return string The ID of the response.
+   */
+  public function getId()
+  {
+    return $this->id;
+  }
+
+  /**
+   * @param string $id Set the response ID.
+   */
+  public function setId($id)
+  {
+    $this->id = $id;
+  }
 
   /**
    * @return string[] A list of spell corrections based on the search term.
@@ -388,4 +409,3 @@ class Results
     $this->warnings = $warnings;
   }
 }
-
