@@ -17,16 +17,27 @@ class Strength
 
 namespace GroupByInc\API\Request;
 
+use JMS\Serializer\Annotation as JMS;
+
 class Bias
 {
 
-  /** @var string */
+  /**
+   * @var string
+   * @JMS\Type("string")
+   */
   private $name;
 
-  /** @var string */
+  /**
+   * @var string
+   * @JMS\Type("string")
+   */
   private $content;
 
-  /** @var string */
+  /**
+   * @var string
+   * @JMS\Type("string")
+   */
   private $strength;
 
   /**

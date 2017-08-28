@@ -2,6 +2,8 @@
 
 namespace GroupByInc\API\Request\SelectedRefinement;
 
+use JMS\Serializer\Annotation as JMS;
+
 class Type
 {
   const Range = 'Range';
@@ -27,10 +29,12 @@ abstract class SelectedRefinement
   private $id;
   /**
    * @var string
+   * @JMS\Type("string")
    */
   private $navigationName;
   /**
    * @var bool
+   * @JMS\Type("boolean")
    */
   private $exclude = false;
 

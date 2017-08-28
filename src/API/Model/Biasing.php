@@ -20,6 +20,11 @@ class Biasing
   private $influence = null;
 
   /**
+   * @var NumericBoost[]
+   */
+  private $numericBoosts = array();
+
+  /**
    * @var Bias[]
    */
   private $biases = array();
@@ -83,6 +88,25 @@ class Biasing
   public function setInfluence($influence)
   {
     $this->influence = $influence;
+    return $this;
+  }
+
+  /**
+   * @return NumericBoost[]
+   */
+  public function getNumericBoosts()
+  {
+    return $this->numericBoosts;
+  }
+
+  /**
+   * @param NumericBoost[] $numericBoosts
+   *
+   * @return Biasing
+   */
+  public function setNumericBoosts($numericBoosts)
+  {
+    $this->numericBoosts = $numericBoosts;
     return $this;
   }
 

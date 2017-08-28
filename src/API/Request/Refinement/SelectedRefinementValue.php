@@ -9,6 +9,7 @@ class SelectedRefinementValue extends SelectedRefinement
 {
   /**
    * @var string
+   * @JMS\Type("string")
    */
   private $value;
 

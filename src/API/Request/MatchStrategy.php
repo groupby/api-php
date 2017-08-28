@@ -2,9 +2,14 @@
 
 namespace GroupByInc\API\Request;
 
+use JMS\Serializer\Annotation as JMS;
+
 class MatchStrategy
 {
-  /** @var PartialMatchRule[] */
+  /**
+   * @var PartialMatchRule[]
+   * @JMS\Type("array<GroupByInc\API\Request\PartialMatchRule>")
+   */
   private $rules;
 
   /**
@@ -25,6 +30,5 @@ class MatchStrategy
     $this->rules = $rules;
     return $this;
   }
-
 
 }

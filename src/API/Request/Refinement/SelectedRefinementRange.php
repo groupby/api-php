@@ -9,10 +9,12 @@ class SelectedRefinementRange extends SelectedRefinement
 {
   /**
    * @var string
+   * @JMS\Type("string")
    */
   private $high;
   /**
    * @var string
+   * @JMS\Type("string")
    */
   private $low;
 

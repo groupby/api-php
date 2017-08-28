@@ -7,6 +7,7 @@ use GroupByInc\API\Model\Biasing as MBiasing;
 use GroupByInc\API\Model\CustomUrlParam;
 use GroupByInc\API\Model\MatchStrategy as MMatchStrategy;
 use GroupByInc\API\Model\Navigation;
+use GroupByInc\API\Model\NumericBoost as MNumericBoost;
 use GroupByInc\API\Model\PartialMatchRule as MPartialMatchRule;
 use GroupByInc\API\Model\Refinement;
 use GroupByInc\API\Model\Refinement\Type;
@@ -16,6 +17,7 @@ use GroupByInc\API\Model\Sort as MSort;
 use GroupByInc\API\Request\Bias;
 use GroupByInc\API\Request\Biasing;
 use GroupByInc\API\Request\MatchStrategy as RMatchStrategy;
+use GroupByInc\API\Request\NumericBoost as RNumericBoost;
 use GroupByInc\API\Request\PartialMatchRule as RPartialMatchRule;
 use GroupByInc\API\Request\RefinementsRequest;
 use GroupByInc\API\Request\Request;
@@ -86,6 +88,8 @@ class Query
   private $restrictNavigation;
   /** @var MBiasing */
   private $biasing;
+  /** @var MMatchStrategy */
+  private $matchStrategy;
 
   /** @var Serializer */
   private $serializer;
@@ -188,6 +192,10 @@ class Query
       foreach ($this->sort as $s) {
         array_push($request->sort, $this->convertSort($s));
       }
+    }
+
+    if (!empty($this->matchStrategy)) {
+      $request->matchStrategy = self::convertPartialMatchStrategy($this->matchStrategy);
     }
 
 //        $returnBinary = $this->returnBinary;
@@ -807,6 +815,20 @@ class Query
   }
 
   /**
+   * @return MMatchStrategy
+   */
+  public function getMatchStrategy() {
+    return $this->matchStrategy;
+  }
+
+  /**
+   * @param MMatchStrategy $matchStrategy
+   */
+  public function setMatchStrategy($matchStrategy) {
+    $this->matchStrategy = $matchStrategy;
+  }
+
+  /**
    * @param MSort $sort
    *
    * @return RSort
@@ -879,7 +901,7 @@ class Query
    */
   protected static function convertBias($bias)
   {
-    return (new MBias())->setName($bias->getName())->setContent($bias->getContent())->setStrength($bias->getStrength());
+    return (new Bias())->setName($bias->getName())->setContent($bias->getContent())->setStrength($bias->getStrength());
   }
 
   /**
@@ -890,6 +912,24 @@ class Query
   protected static function convertBiases($biases)
   {
     return array_map('self::convertBias', $biases);
+  }
+
+  /**
+   * @param MNumericBoost $boost
+   *
+   * @return RNumericBoost
+   */
+  protected static function convertNumericBoost($boost) {
+    return (new RNumericBoost())->setName($boost->getName())->setStrength($boost->getStrength())->setInverted($boost->isInverted());
+  }
+
+  /**
+   * @param MNumericBoost[] $boosts
+   *
+   * @return RNumericBoost[]
+   */
+  protected static function convertNumericBoosts($boosts) {
+    return array_map('self::convertNumericBoost', $boosts);
   }
 
   /**
@@ -915,6 +955,9 @@ class Query
         $convertedBiasing->setBiases(self::convertBiases($biasing->getBiases()));
         $convertedBiasing->setAugmentBiases($biasing->isAugmentBiases());
         $hasData = true;
+      }
+      if ($biasing->getNumericBoosts() != array()) {
+        $convertedBiasing->setNumericBoosts(self::convertNumericBoosts($biasing->getNumericBoosts()));
       }
       if ($biasing->getInfluence() !== null) {
         $convertedBiasing->setInfluence($biasing->getInfluence());

@@ -2,15 +2,29 @@
 
 namespace GroupByInc\API\Request;
 
+use JMS\Serializer\Annotation as JMS;
+
 class PartialMatchRule
 {
-  /** @var int */
+  /**
+   * @var int
+   * @JMS\Type("integer")
+   */
   private $terms;
-  /** @var int */
+  /**
+   * @var int
+   * @JMS\Type("integer")
+   */
   private $termsGreaterThan;
-  /** @var int */
+  /**
+   * @var int
+   * @JMS\Type("integer")
+   */
   private $mustMatch;
-  /** @var bool */
+  /**
+   * @var bool
+   * @JMS\Type("boolean")
+   */
   private $percentage = false;
 
   /**
