@@ -7,6 +7,7 @@ use GroupByInc\API\Model\ContentZone;
 use GroupByInc\API\Model\CustomUrlParam;
 use GroupByInc\API\Model\Metadata;
 use GroupByInc\API\Model\Navigation;
+use GroupByInc\API\Model\NumericBoost;
 use GroupByInc\API\Model\PageInfo;
 use GroupByInc\API\Model\Record;
 use GroupByInc\API\Model\RecordZone;
@@ -202,6 +203,10 @@ class Object
         self::$BIASING->setBiases(array(
             (new Bias())->setName("keys")->setContent("values")->setStrength(Strength::Strong_Increase),
             (new Bias())->setName("all")->setContent("my")->setStrength(Strength::Strong_Decrease)
+        ));
+        self::$BIASING->setNumericBoosts(array(
+          (new NumericBoost())->setName("test")->setInverted(false)->setStrength(1.0),
+          (new NumericBoost())->setName("test2")->setInverted(true)->setStrength(2.0)
         ));
 
         self::$REQUEST = new Request();

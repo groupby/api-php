@@ -2,6 +2,7 @@
 
 namespace GroupByInc\API\Model;
 
+use GroupByInc\API\Request\Request;
 use JMS\Serializer\Annotation as JMS;
 
 class Results
@@ -51,7 +52,6 @@ class Results
    * @JMS\Type("string")
    */
   public $correctedQuery;
-
   /**
    * @var Template
    * @JMS\Type("GroupByInc\API\Model\Template")
@@ -63,6 +63,11 @@ class Results
    */
   public $pageInfo;
   /**
+   * @var MatchStrategy
+   * @JMS\Type("GroupByInc\API\Model\MatchStrategy")
+   */
+  public $matchStrategy;
+  /**
    * @var Navigation[]
    * @JMS\Type("array<GroupByInc\API\Model\Navigation>")
    */
@@ -72,7 +77,6 @@ class Results
    * @JMS\Type("array<GroupByInc\API\Model\Navigation>")
    */
   public $selectedNavigation = array();
-
   /**
    * @var Record[]
    * @JMS\Type("array<GroupByInc\API\Model\Record>")
@@ -98,12 +102,16 @@ class Results
    * @JMS\Type("array<GroupByInc\API\Model\Metadata>")
    */
   public $siteParams = array();
-
   /**
    * @var string[]
    * @JMS\Type("array<string>")
    */
   public $warnings = array();
+  /**
+   * @var ResultsMetadata
+   * @JMS\Type("GroupByInc\API\Model\ResultsMetadata")
+   */
+  public $resultsMetadata;
 
   /**
    * @return string The ID of the response.
@@ -199,6 +207,22 @@ class Results
   public function setPageInfo($pageInfo)
   {
     $this->pageInfo = $pageInfo;
+  }
+
+  /**
+   * @return MatchStrategy associated with this Results object
+   */
+  public function getMatchStrategy()
+  {
+    return $this->matchStrategy;
+  }
+
+  /**
+   * @param MatchStrategy $matchStrategy Set the match strategy
+   */
+  public function setMatchStrategy($matchStrategy)
+  {
+    $this->matchStrategy = $matchStrategy;
   }
 
   /**
@@ -407,5 +431,21 @@ class Results
   public function setWarnings($warnings)
   {
     $this->warnings = $warnings;
+  }
+
+  /**
+   * @return ResultsMetadata
+   */
+  public function getResultsMetadata()
+  {
+    return $this->resultsMetadata;
+  }
+
+  /**
+   * @param ResultsMetadata $resultsMetadata
+   */
+  public function setResultsMetadata($resultsMetadata)
+  {
+    $this->resultsMetadata = $resultsMetadata;
   }
 }

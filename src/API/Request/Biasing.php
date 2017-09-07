@@ -2,25 +2,39 @@
 
 namespace GroupByInc\API\Request;
 
+use JMS\Serializer\Annotation as JMS;
+
 class Biasing
 {
-  /** @var string[] */
+  /**
+   * @var string[]
+   * @JMS\Type("array<string>")
+   */
   private $bringToTop = array();
 
   /**
    * @var bool
+   * @JMS\Type("boolean")
    */
   private $augmentBiases = false;
 
   /**
    * @var float|null
+   * @JMS\Type("float")
    */
   private $influence = null;
 
   /**
    * @var Bias[]
+   * @JMS\Type("array<GroupByInc\API\Request\Bias>")
    */
   private $biases = array();
+
+  /**
+   * @var NumericBoost[]
+   * @JMS\Type("array<GroupByInc\API\Request\NumericBoost>")
+   */
+  private $numericBoosts = array();
 
   /**
    * @return string[]
@@ -76,6 +90,25 @@ class Biasing
   public function setInfluence($influence)
   {
     $this->influence = $influence;
+    return $this;
+  }
+
+  /**
+   * @return NumericBoost[]
+   */
+  public function getNumericBoosts()
+  {
+    return $this->numericBoosts;
+  }
+
+  /**
+   * @param NumericBoost[] $numericBoosts
+   *
+   * @return Biasing
+   */
+  public function setNumericBoosts($numericBoosts)
+  {
+    $this->numericBoosts = $numericBoosts;
     return $this;
   }
 
